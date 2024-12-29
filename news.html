@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Detail</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="news-title"></h1>
+        <img id="news-image" src="" alt="" style="display: none;">
+        <p id="news-description"></p>
+        <a id="news-link" href="" target="_blank">Read more</a>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const newsArticle = JSON.parse(localStorage.getItem('newsArticle'));
+
+            if (newsArticle) {
+                document.getElementById('news-title').textContent = newsArticle.title;
+                if (newsArticle.image) {
+                    const newsImage = document.getElementById('news-image');
+                    newsImage.src = newsArticle.image;
+                    newsImage.style.display = 'block';
+                }
+                document.getElementById('news-description').innerHTML = newsArticle.description;
+                document.getElementById('news-link').href = newsArticle.link;
+            }
+        });
+    </script>
+</body>
+</html>
