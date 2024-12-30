@@ -2,47 +2,55 @@ const API_KEY = 'AIzaSyAotb7tDK4R8laDuTVk_l2Z_G4_K3kx_4A';  // Replace with your
 
 // Function to fetch YouTube videos and update the Google Sheet
 function fetchYouTubeVideos() {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const channels = [
-        { id: 'UCq-Fj5jknLsUf-MWSy4_brA', name: 'Asianet News' },  // Replace with actual channel IDs and names
-        // Add more channels here
-    ];
+    try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+        const channels = [
+            { id: 'UCq-Fj5jknLsUf-MWSy4_brA', name: 'Asianet News' },  // Replace with actual channel IDs and names
+            // Add more channels here
+        ];
 
-    channels.forEach(channel => {
-        const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channel.id}&part=snippet,id&order=date&maxResults=10`;
-        const response = UrlFetchApp.fetch(url);
-        const data = JSON.parse(response.getContentText());
+        channels.forEach(channel => {
+            const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channel.id}&part=snippet,id&order=date&maxResults=10`;
+            const response = UrlFetchApp.fetch(url);
+            const data = JSON.parse(response.getContentText());
 
-        const videos = data.items;
-        const currentData = sheet.getDataRange().getValues();
-        const existingIds = currentData.map(row => row[2]);  // Assuming the third column is Video ID
+            const videos = data.items;
+            const currentData = sheet.getDataRange().getValues();
+            const existingIds = currentData.map(row => row[2]);  // Assuming the third column is Video ID
 
-        videos.forEach(video => {
-            const videoId = video.id.videoId;
-            const title = video.snippet.title;
-            const publishedAt = video.snippet.publishedAt;
+            videos.forEach(video => {
+                const videoId = video.id.videoId;
+                const title = video.snippet.title;
+                const publishedAt = video.snippet.publishedAt;
 
-            if (!existingIds.includes(videoId)) {
-                sheet.appendRow([channel.id, channel.name, videoId, title, publishedAt]);
-            }
+                if (!existingIds.includes(videoId)) {
+                    sheet.appendRow([channel.id, channel.name, videoId, title, publishedAt]);
+                }
+            });
         });
-    });
+    } catch (error) {
+        console.error('Error fetching YouTube videos:', error);
+    }
 }
 
 // Function to create a JSON file from Google Sheet data and push it to GitHub
 function createJsonFile() {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const data = sheet.getDataRange().getValues();
-    const json = data.slice(1).map(row => ({
-        channelId: row[0],
-        channelName: row[1],
-        videoId: row[2],
-        title: row[3],
-        publishedAt: row[4]
-    }));
+    try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+        const data = sheet.getDataRange().getValues();
+        const json = data.slice(1).map(row => ({
+            channelId: row[0],
+            channelName: row[1],
+            videoId: row[2],
+            title: row[3],
+            publishedAt: row[4]
+        }));
 
-    const jsonString = JSON.stringify(json);
-    pushToGitHub(jsonString);
+        const jsonString = JSON.stringify(json);
+        pushToGitHub(jsonString);
+    } catch (error) {
+        console.error('Error creating JSON file:', error);
+    }
 }
 
 // Function to push JSON data to GitHub
