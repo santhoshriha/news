@@ -1,128 +1,100 @@
-const API_KEY = 'AIzaSyAotb7tDK4R8laDuTVk_l2Z_G4_K3kx_4A';  // Replace with your YouTube Data API key
+document.addEventListener('DOMContentLoaded', () => {
+    const channelsContainer = document.getElementById('channels-container');
+    const bigThumbnailContainer = document.getElementById('big-thumbnail-container');
+    const bigThumbnail = document.getElementById('big-thumbnail');
+    const playButton = document.getElementById('play-button');
+    const closeButton = document.getElementById('close-button');
 
-// Function to fetch YouTube videos and update the Google Sheet
-function fetchYouTubeVideos() {
-    try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-        const channels = [
-            { id: 'UCq-Fj5jknLsUf-MWSy4_brA', name: 'Asianet News' },  // Replace with actual channel IDs and names
-            // Add more channels here
-        ];
-
-        channels.forEach(channel => {
-            const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channel.id}&part=snippet,id&order=date&maxResults=10`;
-            Logger.log(`Fetching URL: ${url}`);
-            const response = UrlFetchApp.fetch(url);
-            const data = JSON.parse(response.getContentText());
-            Logger.log(`Response data: ${JSON.stringify(data)}`);
-
-            if (!data.items) {
-                Logger.log(`No items found for channel ${channel.name} (${channel.id})`);
-                return;
+    async function fetchVideos() {
+        const url = 'https://raw.githubusercontent.com/santhoshriha/news/main/YouTube_Videos.json';
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
             }
+            const videos = await response.json();
+            console.log('Fetched videos:', videos);  // Log the fetched videos for debugging
+            displayVideos(videos);
+        } catch (error) {
+            console.error('Error fetching videos:', error);
+        }
+    }
 
-            const videos = data.items;
-            const currentData = sheet.getDataRange().getValues();
-            const existingIds = currentData.map(row => row[2]);  // Assuming the third column is Video ID
+    function displayVideos(videos) {
+        channelsContainer.innerHTML = ''; // Clear existing content
+        if (videos.length === 0) {
+            channelsContainer.innerHTML = '<p>No videos found.</p>';
+            return;
+        }
 
-            videos.forEach(video => {
-                const videoId = video.id.videoId;
-                const title = video.snippet.title;
-                const publishedAt = video.snippet.publishedAt;
+        const channels = {};
 
-                if (!existingIds.includes(videoId)) {
-                    sheet.appendRow([channel.id, channel.name, videoId, title, publishedAt]);
-                    Logger.log(`Added video: ${title} (${videoId})`);
-                }
-            });
+        videos.forEach(video => {
+            if (!channels[video.channelId]) {
+                channels[video.channelId] = {
+                    name: video.channelName,
+                    videos: []
+                };
+            }
+            channels[video.channelId].videos.push(video);
         });
-    } catch (error) {
-        Logger.log(`Error in fetchYouTubeVideos: ${error}`);
-    }
-}
 
-// Function to create a JSON file from Google Sheet data and push it to GitHub
-function createJsonFile() {
-    try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-        const data = sheet.getDataRange().getValues();
-        const json = data.slice(1).map(row => ({
-            channelId: row[0],
-            channelName: row[1],
-            videoId: row[2],
-            title: row[3],
-            publishedAt: row[4]
-        }));
+        for (const channelId in channels) {
+            const channelDiv = document.createElement('div');
+            channelDiv.className = 'channel-container';
 
-        const jsonString = JSON.stringify(json);
-        pushToGitHub(jsonString);
-    } catch (error) {
-        Logger.log(`Error in createJsonFile: ${error}`);
-    }
-}
+            const channelHeader = document.createElement('div');
+            channelHeader.className = 'channel-header';
 
-// Function to push JSON data to GitHub
-function pushToGitHub(jsonString) {
-    const token = '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'; // Replace with your GitHub token
-    const repo = 'santhoshriha/news'; // Replace with your GitHub repo
-    const path = 'YouTube_Videos.json'; // Replace with the path to your JSON file in the repo
-    const message = 'Update JSON data from Google Sheet';
-    const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+            const channelName = document.createElement('div');
+            channelName.className = 'channel-name';
+            channelName.textContent = channels[channelId].name;
 
-    const headers = {
-        Authorization: 'token ' + token,
-        'Content-Type': 'application/json'
-    };
+            channelHeader.appendChild(channelName);
+            channelDiv.appendChild(channelHeader);
 
-    try {
-        // Get the current content of the file to obtain the sha
-        const response = UrlFetchApp.fetch(url, { headers: headers, muteHttpExceptions: true });
-        const responseCode = response.getResponseCode();
-        let currentSha = null;
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'video-container';
 
-        if (responseCode === 200) {
-            const currentContent = JSON.parse(response.getContentText());
-            currentSha = currentContent.sha;
-        } else if (responseCode !== 404) {
-            Logger.log('Error fetching file:', response.getContentText());
-            throw new Error('Failed to fetch file from GitHub. Response code: ' + responseCode);
+            channels[channelId].videos.forEach(video => {
+                const videoDiv = document.createElement('div');
+                videoDiv.className = 'video';
+
+                const thumbnail = document.createElement('img');
+                thumbnail.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+                thumbnail.alt = 'Video Thumbnail';
+                thumbnail.className = 'thumbnail';
+
+                const title = document.createElement('h3');
+                title.textContent = video.title;
+
+                const publishedAt = document.createElement('p');
+                publishedAt.textContent = new Date(video.publishedAt).toLocaleString();
+                publishedAt.className = 'details';
+
+                videoDiv.appendChild(thumbnail);
+                videoDiv.appendChild(title);
+                videoDiv.appendChild(publishedAt);
+                videoContainer.appendChild(videoDiv);
+
+                videoDiv.addEventListener('click', () => {
+                    bigThumbnail.src = thumbnail.src;
+                    bigThumbnailContainer.style.display = 'flex';
+                    playButton.onclick = () => {
+                        window.location.href = `https://www.youtube.com/watch?v=${video.videoId}`;
+                    };
+                });
+            });
+
+            channelDiv.appendChild(videoContainer);
+            channelsContainer.appendChild(channelDiv);
         }
 
-        const payload = {
-            message: message,
-            content: Utilities.base64Encode(jsonString),
-            sha: currentSha
-        };
-
-        const options = {
-            method: 'PUT',
-            headers: headers,
-            payload: JSON.stringify(payload),
-            muteHttpExceptions: true
-        };
-
-        const putResponse = UrlFetchApp.fetch(url, options);
-        if (putResponse.getResponseCode() !== 200) {
-            Logger.log('Error updating file:', putResponse.getContentText());
-            throw new Error('Failed to update file on GitHub. Response code: ' + putResponse.getResponseCode());
-        }
-
-        Logger.log('File updated successfully.');
-    } catch (error) {
-        Logger.log(`Error in pushToGitHub: ${error}`);
+        closeButton.addEventListener('click', () => {
+            bigThumbnailContainer.style.display = 'none';
+        });
     }
-}
 
-// Scheduled function to fetch videos and update JSON file on GitHub
-function scheduledUpdate() {
-    fetchYouTubeVideos();
-    createJsonFile();
-}
-
-// Function to create a time-driven trigger
-function createTrigger() {
-    ScriptApp.newTrigger('scheduledUpdate')
-             .timeBased()
-             .everyMinutes(5) // Set the interval to your needs
-             .create();
-}
+    // Fetch and display videos on page load
+    fetchVideos();
+});
