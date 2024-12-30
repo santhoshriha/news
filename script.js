@@ -63,7 +63,7 @@ function createJsonFile() {
 
 // Function to push JSON data to GitHub
 function pushToGitHub(jsonString) {
-    const token = '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'; // Replace with your GitHub token
+    const token = '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'; // Replace with your GitHub token
     const repo = 'santhoshriha/news'; // Replace with your GitHub repo
     const path = 'YouTube_Videos.json'; // Replace with the path to your JSON file in the repo
     const message = 'Update JSON data from Google Sheet';
