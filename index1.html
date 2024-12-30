@@ -7,6 +7,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
         }
         .channel-container {
             margin-bottom: 40px;
@@ -29,15 +32,31 @@
         .video {
             flex: 1 1 300px;
             margin: 10px;
-            text-align: center;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .video:hover {
+            transform: translateY(-5px);
         }
         .thumbnail {
             width: 100%;
             height: auto;
         }
         .details {
-            margin-top: 10px;
+            padding: 15px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .publishedAt {
+            font-size: 14px;
+            color: #555;
         }
         .big-thumbnail-container {
             display: none;
