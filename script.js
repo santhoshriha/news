@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function displayVideos(videos) {
         channelsContainer.innerHTML = ''; // Clear existing content
+
         if (videos.length === 0) {
             channelsContainer.innerHTML = '<p>No videos found.</p>';
             return;
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         for (const channelId in channels) {
+            const channel = channels[channelId];
+            channel.videos.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); // Sort videos by date
+
             const channelDiv = document.createElement('div');
             channelDiv.className = 'channel-container';
 
@@ -48,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const channelName = document.createElement('div');
             channelName.className = 'channel-name';
-            channelName.textContent = channels[channelId].name;
+            channelName.textContent = channel.name;
 
             channelHeader.appendChild(channelName);
             channelDiv.appendChild(channelHeader);
@@ -56,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const videoContainer = document.createElement('div');
             videoContainer.className = 'video-container';
 
-            channels[channelId].videos.forEach(video => {
+            channel.videos.forEach(video => {
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'video';
 
@@ -65,16 +69,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 thumbnail.alt = 'Video Thumbnail';
                 thumbnail.className = 'thumbnail';
 
-                const title = document.createElement('h3');
+                const details = document.createElement('div');
+                details.className = 'details';
+
+                const title = document.createElement('div');
+                title.className = 'title';
                 title.textContent = video.title;
 
-                const publishedAt = document.createElement('p');
+                const publishedAt = document.createElement('div');
+                publishedAt.className = 'publishedAt';
                 publishedAt.textContent = new Date(video.publishedAt).toLocaleString();
-                publishedAt.className = 'details';
+
+                details.appendChild(title);
+                details.appendChild(publishedAt);
 
                 videoDiv.appendChild(thumbnail);
-                videoDiv.appendChild(title);
-                videoDiv.appendChild(publishedAt);
+                videoDiv.appendChild(details);
                 videoContainer.appendChild(videoDiv);
 
                 videoDiv.addEventListener('click', () => {
